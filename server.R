@@ -15,6 +15,7 @@ library("tidyverse")
 library("dplyr")
 library("leaflet")
 library("cowplot")
+library("DT")
 
 
 # Download and Clean Data -------------------------------------------------
@@ -145,6 +146,11 @@ shinyServer(function(input, output) {
       scale_y_continuous(name = choiceList[match(x = input$input_fwvar,table = choiceValues)])+
       theme_cowplot()
     
+  })
+  
+  output$table_selectedData <- DT::renderDataTable({
+    filter(data_clean, Name == data_of_click$clickedMarker) %>%
+      select(-clicked)
   })
   
 })
