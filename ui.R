@@ -10,20 +10,26 @@
 #TODO
 # Document
 # Adjust map color
+# Value specific histograms
 
 library("semantic.dashboard")
 library("leaflet")
+library("plotly")
 
-choiceList <- c("Energy Release Component","Burning Index","Spread Component","KBDI","100 Hr FM","1000 Hr FM","10 Hr FM")
-choiceValues <- names(data_clean)[13:19]
-names(choiceValues) <- choiceList
+# Download and Clean Data -------------------------------------------------
+
+
+
+choiceList <<- c("Energy Release Component","Burning Index","Spread Component","KBDI","100 Hr FM","1000 Hr FM","10 Hr FM")
+choiceValues <<- c("ERC","BI","SC","KBDI","Hun","Thou","Ten")
+names(choiceValues) <<- choiceList
 
 header <- dashboardHeader(title = "RAWS Explorer",
                           disable = FALSE,
                           inverted = TRUE ,color = "black")
 sidebar <- dashboardSidebar(
   sidebarMenu(
-    menuItem(tabName = "map",
+    menuItem(tabName = "mapTab",
              text = "Home",
              icon = icon("map")),
     menuItem(tabName = "table",
@@ -35,33 +41,36 @@ sidebar <- dashboardSidebar(
   )
 )
 
-tab_map <- fluidRow(column(leafletOutput("map"), width = 12),
-           tab_box(width = 12,
-                   title = "Inputs & Graphs",
+mapTab <- tabItem(tabName = "mapTab", 
+  fluidRow(leafletOutput("map"), width = 12),
+  fluidRow(box(selectInput(inputId = "input_fwvar",
+                           choices = choiceValues,
+                           selected = "ERC",
+                           label = "Select Variable To Map"), width = 8),
+           tab_box(width = 8,
+                   title = "Graphs",
                    tabs = list(
-                     list(menu = "Inputs",
-                          content = selectInput(inputId = "input_fwvar",
-                                               choices = choiceValues,
-                                               selected = "ERC",
-                                               label = "Select Variable To Map")),
-                     list(menu = "Histogram",
-                               content = plotOutput("fig_histogram", height = "300px")),
                      list(menu = "Time Series",
-                          content = plotOutput("fig_timeseries",
-                                               height = "300px")))))
+                          content = plotlyOutput("fig_timeseries",
+                                               height = "300px")),
+                     list(menu = "Histogram",
+                          content = plotlyOutput("fig_histogram", height = "300px")))
+                   )
+           )
+)
 
 
 tab_table <- fluidRow(
-      dataTableOutput("table_selectedData")
+      DT::dataTableOutput("table_selectedData")
 )
 
-aboutTab <- fluidRow(includeMarkdown("about.md")
+aboutTab <- fluidRow(box(includeMarkdown("about.md"))
   )
 
 
 dashboard <- dashboardBody(
   tabItems(
-    tabItem(tabName = "map", tab_map),
+    mapTab,
     tabItem(tabName = "table", tab_table),
     tabItem(tabname = "about",aboutTab))
 )
