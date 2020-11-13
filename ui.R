@@ -12,76 +12,85 @@
 # Adjust map color
 # Value specific histograms
 
-library("semantic.dashboard")
+#library("semantic.dashboard")
+#library('shiny.semantic')
+library("shinydashboard")
+library("shinydashboardPlus")
 library("leaflet")
 library("plotly")
 
 # Download and Clean Data -------------------------------------------------
 
+print("Generating choice list...",quote = F)
 
+choiceList <<- c("Energy Release Component","Burning Index","Spread Component","KBDI","10 Hr FM","100 Hr FM","1000 Hr FM")
+choiceValues <<- c("ERC","BI","SC","KBDI","Ten","Hun","Thou")
 
-choiceList <<- c("Energy Release Component","Burning Index","Spread Component","KBDI","100 Hr FM","1000 Hr FM","10 Hr FM")
-choiceValues <<- c("ERC","BI","SC","KBDI","Hun","Thou","Ten")
 names(choiceValues) <<- choiceList
 
-header <- dashboardHeader(title = "RAWS Explorer",
-                          disable = FALSE,
-                          inverted = TRUE ,color = "black")
-sidebar <- dashboardSidebar(
-  sidebarMenu(
-    menuItem(tabName = "mapTab",
-             text = "Home",
-             icon = icon("map")),
-    menuItem(tabName = "table",
-             text = "Data Table",
-             icon = icon("table")),
-    menuItem(tabName = "about",
-             text = "About",
-             icon = icon("book"))
-  )
-)
+print("Done.",quote = F)
 
-mapTab <- tabItem(tabName = "mapTab", 
-  fluidRow(leafletOutput("map"), width = 12),
-  fluidRow(box(selectInput(inputId = "input_fwvar",
-                           choices = choiceValues,
-                           selected = "ERC",
-                           label = "Select Variable To Map"), width = 8),
-           tab_box(width = 8,
-                   title = "Graphs",
-                   tabs = list(
-                     list(menu = "Time Series",
-                          content = plotlyOutput("fig_timeseries",
-                                               height = "300px")),
-                     list(menu = "Histogram",
-                          content = plotlyOutput("fig_histogram", height = "300px")))
+
+header <- dashboardHeader(title = "RAWS Tracker")
+
+sidebar <- 
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem(tabName = "mapTab",
+               text = "Home",
+               icon = icon("map")),
+      menuItem(tabName = "table",
+               text = "Data Table",
+               icon = icon("table")),
+      menuItem(tabName = "about_link",
+               text = "About",
+               icon = icon("book"))
+    ),
+    selectInput(inputId = "input_fwvar",
+                choices = choiceValues,
+                selected = "ERC",
+                label =  "Select Variable To Map")
+  )
+
+tab_mainPanel <- 
+  tabItem(tabName = "mapTab", 
+          fluidRow(leafletOutput("map"), width = 12),
+          fluidRow(tabBox(width = 12,
+                          title = "Graphs",
+                          tabPanel(title = "Time Series",
+                                   plotlyOutput("fig_timeseries",
+                                                height = "300px")),
+                          tabPanel(title = "Histogram",
+                                   plotlyOutput("fig_histogram",
+                                                height = "300px")))
                    )
-           )
+          )
+  
+
+
+tab_table <- tabItem(tabName = "table",
+                     fluidRow(
+                       DT::dataTableOutput("table_selectedData")
+                       )
 )
 
-
-tab_table <- fluidRow(
-      DT::dataTableOutput("table_selectedData")
-)
-
-aboutTab <- fluidRow(box(includeMarkdown("about.md"))
-  )
+tab_about <- tabItem(tabName = "about_link",
+                    fluidRow(box(width = 12,includeMarkdown("about.md"))
+                    )
+                    )
 
 
-dashboard <- dashboardBody(
+body <- dashboardBody(
   tabItems(
-    mapTab,
+    tab_mainPanel,
     tabItem(tabName = "table", tab_table),
-    tabItem(tabname = "about",aboutTab))
+    tab_about)
 )
 
 
-
-ui <- dashboardPage(title = "RAWS Explorer",
-                    header = header,
+ui <- dashboardPage(header = header,
                     sidebar = sidebar,
-                    body = dashboard,
-                    suppress_bootstrap = FALSE
+                    body = body
 )
 
 
